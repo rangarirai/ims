@@ -6,6 +6,7 @@ import PageWrapper from "@/components/PageWrapper";
 import { useStore } from "@/store";
 import Form from "./Form";
 import ViewTemplate from "@/components/ViewTemplate";
+import { purchaseCollectionPath } from "@/hooks/useBatch";
 
 interface Props {}
 
@@ -13,8 +14,13 @@ const Purchases: React.FC<Props> = () => {
   const { getDocs } = useQuery();
   const purchases = useStore((state) => state.purchases);
 
-  async function get(queryInfo: QueryInfo) {
-    await getDocs(queryInfo, "purchases", "getting purchases");
+  async function get(queryInfo: QueryInfo, collectionPath?: string) {
+    // alert(collectionPath)
+    await getDocs(
+      queryInfo,
+      collectionPath || purchaseCollectionPath,
+      "getting purchases"
+    );
   }
   useEffect(() => {
     get({});

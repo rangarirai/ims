@@ -10,6 +10,7 @@ export function useCurrentPage() {
     ["sales"]: "Sales",
     ["purchases"]: "Purchases",
     ["categories"]: "Categories",
+    ["settings"]: "Settings",
   };
 
   useEffect(() => {

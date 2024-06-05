@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { FirebaseError } from "firebase/app";
 import { AlertType, FormActionType, Doc } from "@/types";
+import cloneDeep from "lodash.clonedeep";
 export type CreateEntryValues = {
   data: Doc[];
   action: FormActionType;
@@ -13,6 +14,8 @@ interface Store {
   sales: Doc[];
   purchases: Doc[];
   categories: Doc[];
+  lowStockThreshold: number;
+  user: { email: string } | undefined;
 }
 export const useStore = create<Store>()(() => ({
   createEntryValues: { action: "create", data: [] },
@@ -22,23 +25,29 @@ export const useStore = create<Store>()(() => ({
   sales: [],
   purchases: [],
   categories: [],
+  lowStockThreshold: 4,
+  user: undefined,
 }));
 
 export const setCreateEntryValues = (createEntryValues: CreateEntryValues) =>
   useStore.setState({
-    createEntryValues: structuredClone(createEntryValues),
+    createEntryValues: cloneDeep(createEntryValues),
   });
 
+export const setLowStockThreshold = (lowStockThreshold: number) =>
+  useStore.setState({ lowStockThreshold });
 export const setLoading = (loading: string | null) =>
   useStore.setState({ loading });
 export const setProducts = (products: Doc[]) =>
-  useStore.setState({ products: structuredClone(products) });
+  useStore.setState({ products: cloneDeep(products) });
 export const setSales = (sales: Doc[]) =>
-  useStore.setState({ sales: structuredClone(sales) });
+  useStore.setState({ sales: cloneDeep(sales) });
 export const setPurchases = (purchases: Doc[]) =>
-  useStore.setState({ purchases: structuredClone(purchases) });
+  useStore.setState({ purchases: cloneDeep(purchases) });
 export const setCategories = (categories: Doc[]) =>
-  useStore.setState({ categories: structuredClone(categories) });
+  useStore.setState({ categories: cloneDeep(categories) });
+export const setUser = (user: { email: string } | undefined) =>
+  useStore.setState({ user: cloneDeep(user) });
 
 export async function handleAlert(alertMessage: AlertType) {
   const { success, info, error, close } = alertMessage;

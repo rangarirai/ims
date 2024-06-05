@@ -1,14 +1,13 @@
+import { Purchase, averageCost } from "@/app/purchases/Form";
 import { Sale } from "@/app/sales/Form";
 import { useBatch } from "@/hooks/useBatch";
-import { useCrud } from "@/hooks/useCrud";
 import { usePurchaseOrSale } from "@/hooks/usePurchaseOrSale";
-import { handleAlert, setProducts, useStore } from "@/store";
+import { handleAlert, useStore } from "@/store";
 import { Button, Stack, TextField } from "@mui/material";
 import { serverTimestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import FlatSelect from "./FlatSelect";
 import { FormProps } from "./PageWrapper";
-import { Purchase, averageCost } from "@/app/purchases/Form";
 
 function PurchaseOrSale({
   action,
@@ -18,7 +17,6 @@ function PurchaseOrSale({
   entity: "sale" | "purchase";
 }) {
   const { createSale, createPurchase } = useBatch();
-  const { handleGetDoc } = useCrud();
   const [quantity, setQuantity] = useState("");
   const categories = useStore((state) => state.categories);
   //* purchase only
@@ -32,23 +30,15 @@ function PurchaseOrSale({
     category,
     color,
     size,
+    categoryDisplay,
     setProductsFiltered,
     setName,
     setCategory,
     setColor,
     setSize,
+    getProduct,
   } = usePurchaseOrSale();
 
-  async function getProduct(productId: string) {
-    let res = await handleGetDoc(
-      "products",
-      productId,
-      null,
-      "getting product"
-    );
-
-    setProducts([{ data: res, id: productId }]);
-  }
   function reset() {
     setProductsFiltered([]);
     setName("");
@@ -116,6 +106,17 @@ function PurchaseOrSale({
         }
         break;
       case "update":
+        await createPurchase(
+          undefined,
+          {
+            quantity: quantity.trim(),
+            productId: selectedDocument?.data.productId,
+            lastEdited: serverTimestamp(),
+            purchasePrice: calculatedPurchasePrice,
+          },
+          selectedDocument?.data.quantity,
+          selectedDocument?.id || ""
+        );
         break;
 
       default:
@@ -123,7 +124,11 @@ function PurchaseOrSale({
     }
   }
   async function handleSubmit(entity: "sale" | "purchase") {
-    if (+quantity <= 0) {
+    if (+quantity < 0) {
+      handleAlert({ info: "quantity must not be negative" });
+      return;
+    }
+    if (+quantity == 0 && action !== "update") {
       handleAlert({ info: "quantity must be greater than 0" });
       return;
     }
@@ -137,28 +142,58 @@ function PurchaseOrSale({
     if (selectedDocument) {
       setQuantity(selectedDocument?.data.quantity);
       getProduct(selectedDocument?.data.productId);
+      if (entity === "purchase") {
+        setTodayPurchasePrice(selectedDocument?.data.todayPurchasePrice);
+      }
     }
   }, [selectedDocument]);
 
   //* purchase only
   useEffect(() => {
-    let calculatedPurchasePriceTemp = averageCost(
-      productsFiltered[0]?.data.purchasePrice,
-      productsFiltered[0]?.data.inStock,
-      todayPurchasePrice,
-      quantity
-    );
-    setCalculatedPurchasePrice(calculatedPurchasePriceTemp.toString());
-  }, [productsFiltered, todayPurchasePrice, quantity]);
+    if (entity === "purchase") {
+      let calculatedPurchasePriceTemp: number = 0;
+      if (action === "update" && selectedDocument) {
+        calculatedPurchasePriceTemp = averageCost(
+          selectedDocument?.data.previousPurchasePrice,
+          (
+            +productsFiltered[0]?.data.inStock -
+            +selectedDocument?.data.quantity
+          ).toString(),
+          todayPurchasePrice,
+          quantity
+        );
+      } else {
+        calculatedPurchasePriceTemp = averageCost(
+          productsFiltered[0]?.data.purchasePrice,
+          productsFiltered[0]?.data.inStock,
+          todayPurchasePrice,
+          quantity
+        );
+      }
+
+      setCalculatedPurchasePrice(calculatedPurchasePriceTemp.toString());
+    }
+  }, [
+    productsFiltered,
+    todayPurchasePrice,
+    quantity,
+    selectedDocument,
+    action,
+  ]);
   //#
   return (
     <Stack spacing={2}>
-      <FlatSelect
-        value={category}
-        label="category"
-        getSelectedOption={setCategory}
-        options={categories?.map((doc) => doc.data?.name) || []}
-      />
+      {action === "update" ? (
+        <TextField value={categoryDisplay} label="category" disabled />
+      ) : (
+        <FlatSelect
+          value={category}
+          label="category"
+          getSelectedOption={setCategory}
+          options={categories?.map((doc) => doc.data?.name) || []}
+        />
+      )}
+
       <FlatSelect
         value={name}
         label="product name"
@@ -178,10 +213,10 @@ function PurchaseOrSale({
         options={productsFiltered?.map((doc) => doc.data?.size) || []}
       />
       <TextField
-        value={
+        value={(
           +productsFiltered[0]?.data?.purchasePrice +
           +productsFiltered[0]?.data?.profit
-        }
+        ).toString()}
         label="sale price"
         disabled
       />

@@ -1,9 +1,15 @@
-import { getColor } from "@/helperFunctions";
+import { getColor, getDate, getMonth, getYear } from "@/helperFunctions";
 import { QueryInfo, FormActionType, Doc } from "@/types";
 import { Edit, Visibility } from "@mui/icons-material";
 import { Button, InputLabel, Stack, TextField, Theme } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PagesDialog from "../components/pagesDialog/PagesDialog";
+import { DatePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
+import { createPurchaseOrSaleCollectionPath } from "@/hooks/useBatch";
+import { useStore } from "@/store";
+var cloneDeep = require("lodash.clonedeep");
+
 export type FormProps = {
   action: FormActionType;
   selectedDocument?: Doc;
@@ -20,7 +26,7 @@ interface PageWrapperProps {
   Form: (props: FormProps) => JSX.Element;
   View: (props: ViewPageProps) => JSX.Element;
   searchedDocuments: Doc[];
-  getDocs: (queryInfo: QueryInfo) => void;
+  getDocs: (queryInfo: QueryInfo, collectionPath?: string) => void;
   searchPlaceHolder: string;
   entity: "Product" | "Purchase" | "Sale" | "Category";
   searchField: string;
@@ -45,6 +51,10 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
     id: "",
   });
   const [searchValue, setSearchValue] = useState<string>("");
+  const lowStockThreshold = useStore((state) => state.lowStockThreshold);
+  const [date, setDate] = useState<string>(
+    `${getYear()}-${getMonth() + 1}-${getDate()}`
+  );
   const [component, setComponent] = useState<ComponentType>({
     type: "form",
     action: "create",
@@ -62,28 +72,71 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
   function openCreate() {
     setComponent({ type: "form", action: "create" });
     setOpen(true);
+    setRefresh(true);
   }
+  useEffect(() => {
+    console.log(date);
+  }, [date]);
 
   return (
     <>
       <Stack spacing={2}>
         <Button onClick={() => openCreate()}>Create {entity}</Button>
         <Stack direction={"row"} alignItems="center" spacing={2}>
-          <TextField
-            value={searchValue}
-            onChange={(e) => {
-              setSearchValue(e.target?.value);
-            }}
-            placeholder={`${searchPlaceHolder}`}
-          ></TextField>
-
-          <Button
-            onClick={() => {
-              getDocs({ field: searchField, value: searchValue });
-            }}
-          >
-            Search
-          </Button>
+          {entity === "Purchase" || entity === "Sale" ? (
+            <>
+              <DatePicker
+                label="Search By Date"
+                value={dayjs(date)}
+                onChange={(value) => {
+                  setDate(value?.format() || "");
+                }}
+                format="DD/MM/YYYY"
+              />
+              <Button
+                onClick={() => {
+                  let values = date.split("T")[0].split("-");
+                  let collectionPath = "";
+                  if (entity === "Purchase") {
+                    collectionPath = createPurchaseOrSaleCollectionPath(
+                      "purchases",
+                      +values[0],
+                      +values[1],
+                      +values[2]
+                    );
+                  }
+                  if (entity === "Sale") {
+                    collectionPath = createPurchaseOrSaleCollectionPath(
+                      "sales",
+                      +values[0],
+                      +values[1],
+                      +values[2]
+                    );
+                  }
+                  getDocs({}, collectionPath);
+                }}
+              >
+                Search
+              </Button>
+            </>
+          ) : (
+            <>
+              <TextField
+                value={searchValue}
+                onChange={(e) => {
+                  setSearchValue(e.target?.value);
+                }}
+                placeholder={`${searchPlaceHolder}`}
+              ></TextField>
+              <Button
+                onClick={() => {
+                  getDocs({ field: searchField, value: searchValue });
+                }}
+              >
+                Search
+              </Button>
+            </>
+          )}
         </Stack>
         {searchedDocuments?.map((doc, index) => (
           <Stack
@@ -100,19 +153,27 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
               <Button
                 color={"success"}
                 onClick={() => {
-                  setSelectedDocument(structuredClone(doc));
+                  setSelectedDocument(cloneDeep(doc));
                   setComponent({ type: "view", action: "none" });
                   setOpen(true);
+                  setRefresh(false);
                 }}
               >
-                <Visibility />
+                <Visibility
+                  color={
+                    entity === "Product" && doc.data.inStock <= lowStockThreshold
+                      ? "error"
+                      : "info"
+                  }
+                />
               </Button>
               <Button
-                color={"warning"}
+                color={"secondary"}
                 onClick={() => {
-                  setSelectedDocument(structuredClone(doc));
+                  setSelectedDocument(cloneDeep(doc));
                   setComponent({ type: "form", action: "update" });
                   setOpen(true);
+                  setRefresh(true);
                 }}
               >
                 <Edit />

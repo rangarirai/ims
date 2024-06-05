@@ -4,6 +4,7 @@ import {
   CollectionReference,
   DocumentData,
   collection,
+  limit,
   orderBy,
   query,
   where,
@@ -20,6 +21,7 @@ export function useQuery() {
     loadingMessage: string
   ) {
     let queryRef = null;
+
     const collectionRef = collection(db, collectionName);
     if (queryInfo?.field) {
       queryRef = query(
@@ -28,10 +30,14 @@ export function useQuery() {
         orderBy("created", "desc")
       );
     } else {
-      queryRef = query(collectionRef, orderBy("created", "desc"));
+      if (collectionName === "products") {
+        queryRef = query(collectionRef, orderBy("inStock", "asc"), limit(30));
+      } else {
+        queryRef = query(collectionRef, orderBy("created", "desc"));
+      }
     }
     let res = await handleGetDocs(queryRef, null, loadingMessage);
-    switch (collectionName) {
+    switch (collectionName.split("/")[0]) {
       case "categories":
         setCategories(res || []);
         break;

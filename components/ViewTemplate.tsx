@@ -1,6 +1,6 @@
 import { formatData, getColor } from "@/helperFunctions";
-import { InputLabel, Stack, Theme, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { InputLabel, Stack, Theme } from "@mui/material";
+import { useEffect, useState } from "react";
 import { ViewPageProps } from "./PageWrapper";
 
 function ViewTemplate({ selectedDocument }: ViewPageProps) {

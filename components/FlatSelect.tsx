@@ -25,6 +25,9 @@ export default function FlatSelect({
           getSelectedOption(e.target?.value?.toString().toLowerCase());
         }}
       >
+        <MenuItem value="">
+          <em>None</em>
+        </MenuItem>
         {options.map((option) => (
           <MenuItem value={option} key={option}>
             {option}

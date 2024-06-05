@@ -7,6 +7,7 @@ import { useStore } from "@/store";
 
 import Form from "./Form";
 import ViewTemplate from "@/components/ViewTemplate";
+import { saleCollectionPath } from "@/hooks/useBatch";
 
 interface Props {}
 
@@ -14,8 +15,12 @@ const Sales: React.FC<Props> = () => {
   const { getDocs } = useQuery();
   const sales = useStore((state) => state.sales);
 
-  async function get(queryInfo: QueryInfo) {
-    await getDocs(queryInfo, "sales", "getting sales");
+  async function get(queryInfo: QueryInfo, collectionPath?: string) {
+    await getDocs(
+      queryInfo,
+      collectionPath || saleCollectionPath,
+      "getting sales"
+    );
   }
   useEffect(() => {
     get({});
