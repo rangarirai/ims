@@ -65,7 +65,7 @@ function NavBar() {
       if (!user) {
         setUser(undefined);
       } else {
-        if (user?.email) setUser({ email: user?.email });
+        if (user?.phoneNumber) setUser({ phoneNumber: user?.phoneNumber });
       }
     });
 

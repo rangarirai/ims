@@ -23,7 +23,7 @@ const june = {
   2: "6hrs", //26
   3: "4hrs", //30
   4: "3hrs", //33
-  5: "",
+  5: "2hrs", //35
 };
 
 // record email of any user who updates the database

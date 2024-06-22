@@ -15,7 +15,7 @@ interface Store {
   purchases: Doc[];
   categories: Doc[];
   lowStockThreshold: number;
-  user: { email: string } | undefined;
+  user: { phoneNumber: string } | undefined;
 }
 export const useStore = create<Store>()(() => ({
   createEntryValues: { action: "create", data: [] },
@@ -46,7 +46,7 @@ export const setPurchases = (purchases: Doc[]) =>
   useStore.setState({ purchases: cloneDeep(purchases) });
 export const setCategories = (categories: Doc[]) =>
   useStore.setState({ categories: cloneDeep(categories) });
-export const setUser = (user: { email: string } | undefined) =>
+export const setUser = (user: { phoneNumber: string } | undefined) =>
   useStore.setState({ user: cloneDeep(user) });
 
 export async function handleAlert(alertMessage: AlertType) {

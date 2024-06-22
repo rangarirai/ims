@@ -13,7 +13,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import React from "react";
 import NavBar from "@/components/NavBar";
-import { Container, Toolbar } from "@mui/material";
+import { AppBar, Container, Stack, Toolbar, Typography } from "@mui/material";
 import ShowAlert from "@/components/ShowAlert";
 import ShowLoader from "@/components/ShowLoader";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -28,10 +28,20 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <AppBar position="static">
+            <Toolbar variant="dense">
+              <Stack
+                direction={"row"}
+                alignItems={"center"}
+                justifyContent={"center"}
+              >
+                <Typography variant="h5">Fanak Cosmetics</Typography>
+              </Stack>
+            </Toolbar>
+          </AppBar>
           <Container>
             <CssBaseline />
             <Toolbar />
-
             {children}
             <ShowAlert />
             <ShowLoader />
