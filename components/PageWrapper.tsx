@@ -1,4 +1,11 @@
-import { getColor, getDate, getMonth, getYear } from "@/helperFunctions";
+import {
+  datesAreEqual,
+  getColor,
+  getDate,
+  getMonth,
+  getYear,
+  toJSDate,
+} from "@/helperFunctions";
 import { QueryInfo, FormActionType, Doc } from "@/types";
 import { Edit, Visibility } from "@mui/icons-material";
 import { Button, InputLabel, Stack, TextField, Theme } from "@mui/material";
@@ -7,7 +14,8 @@ import PagesDialog from "../components/pagesDialog/PagesDialog";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { createPurchaseOrSaleCollectionPath } from "@/hooks/useBatch";
-import { useStore } from "@/store";
+import { handleAlert, useStore } from "@/store";
+import FlatSelect from "./FlatSelect";
 var cloneDeep = require("lodash.clonedeep");
 
 export type FormProps = {
@@ -51,6 +59,7 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
     id: "",
   });
   const [searchValue, setSearchValue] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
   const lowStockThreshold = useStore((state) => state.lowStockThreshold);
   const [date, setDate] = useState<string>(
     `${getYear()}-${getMonth() + 1}-${getDate()}`
@@ -83,6 +92,25 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
       <Stack spacing={2}>
         <Button onClick={() => openCreate()}>Create {entity}</Button>
         <Stack direction={"row"} alignItems="center" spacing={2}>
+          {entity === "Product" && (
+            <Stack justifySelf={"center"} spacing={1}>
+              <FlatSelect
+                value={category}
+                label="category"
+                getSelectedOption={setCategory}
+                options={
+                  optionalData?.categories?.map((doc) => doc.data?.name) || []
+                }
+              />
+              <Button
+                onClick={() => {
+                  getDocs({ field: "category", value: category });
+                }}
+              >
+                Search
+              </Button>
+            </Stack>
+          )}
           {entity === "Purchase" || entity === "Sale" ? (
             <>
               <DatePicker
@@ -120,7 +148,7 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
               </Button>
             </>
           ) : (
-            <>
+            <Stack spacing={1}>
               <TextField
                 value={searchValue}
                 onChange={(e) => {
@@ -131,11 +159,14 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
               <Button
                 onClick={() => {
                   getDocs({ field: searchField, value: searchValue });
+                  if (entity === "Product") {
+                    setCategory("");
+                  }
                 }}
               >
                 Search
               </Button>
-            </>
+            </Stack>
           )}
         </Stack>
         {searchedDocuments?.map((doc, index) => (
@@ -161,7 +192,8 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
               >
                 <Visibility
                   color={
-                    entity === "Product" && doc.data.inStock <= lowStockThreshold
+                    entity === "Product" &&
+                    doc.data.inStock <= lowStockThreshold
                       ? "error"
                       : "info"
                   }
@@ -170,6 +202,17 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
               <Button
                 color={"secondary"}
                 onClick={() => {
+                  if (entity === "Purchase" || entity === "Sale") {
+                    let a = toJSDate(doc.data.created);
+                    let b = new Date();
+                    if (!datesAreEqual(a, b)) {
+                      handleAlert({
+                        error:
+                          "you can only edit a purchase or sale done today",
+                      });
+                      return;
+                    }
+                  }
                   setSelectedDocument(cloneDeep(doc));
                   setComponent({ type: "form", action: "update" });
                   setOpen(true);

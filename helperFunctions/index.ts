@@ -1,4 +1,5 @@
 import { Theme } from "@mui/material";
+import { areDatesEqual } from "@mui/x-date-pickers/internals";
 var cloneDeep = require("lodash.clonedeep");
 import { Timestamp } from "firebase/firestore";
 
@@ -8,12 +9,21 @@ export function getTodayClientDate() {
 export function getMonth() {
   return Timestamp.now().toDate().getMonth();
 }
-export function getDate() {
+export function getDate() { 
   return Timestamp.now().toDate().getDate();
 }
 export function getYear() {
-  return Timestamp.now().toDate().getFullYear()
+  return Timestamp.now().toDate().getFullYear();
 }
+
+export function datesAreEqual(a: Date, b: Date) {
+  let res =
+    a.getDate() === b.getDate() &&
+    a.getMonth() === b.getMonth() &&
+    a.getFullYear() === b.getFullYear();
+  return res;
+}
+
 export function getColor(theme: Theme, index: number) {
   let color = index % 2 === 0 ? "grey.200" : "grey.300";
   let res = theme.palette.mode === "dark" ? null : color;
