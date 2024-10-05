@@ -34,7 +34,7 @@ export function useBatch() {
       const batch = writeBatch(db);
 
       setLoading("creating a sale");
-      let salesCollectionRef = doc(collection(db, saleCollectionPath));
+      let salesDocRef = doc(collection(db, saleCollectionPath));
       if (prev && saleId && editData) {
         batch.update(doc(db, `products`, editData?.productId), {
           inStock: increment(+prev - +editData?.quantity),
@@ -47,7 +47,7 @@ export function useBatch() {
           inStock: increment(-+data?.quantity),
         });
 
-        batch.set(salesCollectionRef, {
+        batch.set(salesDocRef, {
           ...data,
         });
       }
@@ -70,7 +70,7 @@ export function useBatch() {
   ) {
     try {
       const batch = writeBatch(db);
-      let purchasesCollectionRef = doc(collection(db, purchaseCollectionPath));
+      let purchasesDocRef = doc(collection(db, purchaseCollectionPath));
       if (prev && purchaseId && editData) {
         setLoading("updating a purchase");
         batch.update(doc(db, `products`, editData?.productId), {
@@ -86,7 +86,7 @@ export function useBatch() {
           inStock: increment(+data.quantity),
           purchasePrice: data?.purchasePrice,
         });
-        batch.set(purchasesCollectionRef, {
+        batch.set(purchasesDocRef, {
           ...data,
         });
       }
